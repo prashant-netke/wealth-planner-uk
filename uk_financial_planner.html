@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UK Wealth Planner — Personal Financial Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #222228;
+    --surface3: #2a2a32;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0efe8;
+    --text2: #9998a0;
+    --text3: #5a5960;
+    --gold: #c8a96e;
+    --gold2: #e8c98e;
+    --teal: #4ecdc4;
+    --teal2: #7eddd6;
+    --purple: #9b87f5;
+    --purple2: #b8a8ff;
+    --red: #e07070;
+    --green: #6ecb8a;
+    --green2: #9eddb4;
+    --amber: #f0a050;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 2.5rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--gold2);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .header-left p {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .last-updated {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    background: var(--surface2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.75rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .input-card h3 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .input-card h3::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .field {
+    margin-bottom: 0.875rem;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 10px;
+    transition: border-color 0.2s;
+  }
+
+  .field-row:focus-within {
+    border-color: var(--gold);
+  }
+
+  .field-row .prefix {
+    font-size: 13px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .field-row input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    padding: 9px 0;
+    width: 100%;
+  }
+
+  .field-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .note-box {
+    background: rgba(200, 169, 110, 0.06);
+    border: 1px solid rgba(200, 169, 110, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 11.5px;
+    color: var(--text2);
+    line-height: 1.5;
+    margin-top: 0.5rem;
+  }
+
+  .note-box strong { color: var(--gold); }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+  }
+
+  .kpi-card.gold::after { background: var(--gold); }
+  .kpi-card.teal::after { background: var(--teal); }
+  .kpi-card.purple::after { background: var(--purple); }
+  .kpi-card.green::after { background: var(--green); }
+  .kpi-card.amber::after { background: var(--amber); }
+
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .kpi-card.gold .kpi-value { color: var(--gold2); }
+  .kpi-card.teal .kpi-value { color: var(--teal); }
+  .kpi-card.purple .kpi-value { color: var(--purple2); }
+  .kpi-card.green .kpi-value { color: var(--green2); }
+  .kpi-card.amber .kpi-value { color: var(--amber); }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chart-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 320px;
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .charts-row .chart-wrap {
+    height: 240px;
+  }
+
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .table-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: right;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    background: var(--surface2);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  thead th:first-child { text-align: center; }
+
+  tbody td {
+    padding: 8px 14px;
+    text-align: right;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td:first-child {
+    text-align: center;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr.milestone td {
+    background: rgba(155, 135, 245, 0.06);
+    color: var(--text);
+  }
+
+  tbody tr.milestone-end td {
+    background: rgba(78, 205, 196, 0.06);
+    color: var(--text);
+  }
+
+  tbody tr:hover td {
+    background: var(--surface2);
+  }
+
+  .safe { color: var(--green) !important; }
+  .warn { color: var(--amber) !important; }
+  .danger { color: var(--red) !important; }
+  .highlight { color: var(--teal) !important; font-weight: 500; }
+
+  .tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .tag-57 { background: rgba(155,135,245,0.2); color: var(--purple2); }
+  .tag-67 { background: rgba(78,205,196,0.2); color: var(--teal2); }
+  .tag-cap { background: rgba(240,160,80,0.2); color: var(--amber); }
+
+  .milestone-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .milestone-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  .milestone-card.age57 { border-top: 2px solid var(--purple); }
+  .milestone-card.age67 { border-top: 2px solid var(--teal); }
+
+  .milestone-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .milestone-card.age57 h2 { color: var(--purple2); }
+  .milestone-card.age67 h2 { color: var(--teal2); }
+
+  .milestone-card .subtitle {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 1rem;
+  }
+
+  .m-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .m-row:last-child { border-bottom: none; }
+  .m-row span:first-child { color: var(--text2); }
+  .m-row span:last-child { font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  .tax-banner {
+    background: var(--surface);
+    border: 1px solid rgba(200, 169, 110, 0.25);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .tax-item { }
+  .tax-item .t-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+  .tax-item .t-val { font-size: 1.1rem; font-weight: 600; color: var(--gold2); font-family: 'DM Serif Display', serif; }
+  .tax-item .t-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .warning-bar {
+    background: rgba(240, 160, 80, 0.08);
+    border: 1px solid rgba(240, 160, 80, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--amber);
+    display: none;
+    margin-top: 0.75rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 11px;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 768px) {
+    main { padding: 1rem; }
+    .charts-row { grid-template-columns: 1fr; }
+    .milestone-cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>UK Wealth Planner</h1>
+    <p>Personal financial dashboard · Pension & ISA projection · 2024/25 tax rules</p>
+  </div>
+  <div class="last-updated" id="lastUpdated">Last reviewed: —</div>
+</header>
+
+<main>
+
+  <!-- INPUTS -->
+  <div>
+    <p class="section-label">Your inputs — adjust any number to recalculate</p>
+    <div class="inputs-grid">
+
+      <div class="input-card">
+        <h3>Personal</h3>
+        <div class="field">
+          <label>Current age</label>
+          <div class="field-row"><input type="number" id="age" value="41" min="20" max="60"></div>
+        </div>
+        <div class="field">
+          <label>Target retirement age</label>
+          <div class="field-row"><input type="number" id="retireAge" value="57" min="40" max="70"></div>
+        </div>
+        <div class="field">
+          <label>Full pension access age</label>
+          <div class="field-row"><input type="number" id="fullAge" value="67" min="55" max="75"></div>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <h3>Income & Salary</h3>
+        <div class="field">
+          <label>Current gross annual salary (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="salary" value="100000"></div>
+        </div>
+        <div class="field">
+          <label>Annual salary growth (%)</label>
+          <div class="field-row"><span class="prefix">%</span><input type="number" id="salaryGrowth" value="5" step="0.5"></div>
+        </div>
+        <div class="field">
+          <label>Employer pension contribution (%)</label>
+          <div class="field-row"><span class="prefix">%</span><input type="number" id="employerPct" value="4" step="0.5"></div>
+        </div>
+        <div class="note-box"><strong>£100k trap:</strong> Salary sacrifice keeps adjusted net income below £100k — preserving your personal allowance and saving 60% effective tax rate in the taper band.</div>
+      </div>
+
+      <div class="input-card">
+        <h3>Pension</h3>
+        <div class="field">
+          <label>Existing pension pot (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="existingPension" value="80000"></div>
+        </div>
+        <div class="field">
+          <label>Min pension contribution (£/yr)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="minPension" value="18000"></div>
+        </div>
+        <div class="field">
+          <label>HMRC annual allowance cap (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="pensionCap" value="60000"></div>
+        </div>
+        <div class="field">
+          <label>Target adjusted net income (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="targetNet" value="99999"></div>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <h3>ISA & Growth</h3>
+        <div class="field">
+          <label>Starting ISA monthly contribution (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="isaMonthly" value="500"></div>
+        </div>
+        <div class="field">
+          <label>ISA annual limit (£)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="isaLimit" value="20000"></div>
+        </div>
+        <div class="field">
+          <label>Investment growth rate (%)</label>
+          <div class="field-row"><span class="prefix">%</span><input type="number" id="growthRate" value="5" step="0.5"></div>
+        </div>
+        <div class="field">
+          <label>State pension (£/yr, from full age)</label>
+          <div class="field-row"><span class="prefix">£</span><input type="number" id="statePension" value="11500"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="warning-bar" id="warningBar"></div>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div>
+    <p class="section-label">Key metrics — today's position</p>
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </div>
+
+  <!-- TAX BANNER -->
+  <div>
+    <p class="section-label">Annual tax efficiency — salary sacrifice benefit</p>
+    <div class="tax-banner" id="taxBanner"></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">Wealth accumulation — pension & ISA over time</span>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#9b87f5"></span>Pension pot</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#4ecdc4;border-bottom:2px dashed #4ecdc4"></span>ISA pot</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#c8a96e"></span>Combined</span>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="mainChart" role="img" aria-label="Wealth growth chart showing pension, ISA and combined pots over time"></canvas></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Annual pension contribution</span>
+      </div>
+      <div class="chart-wrap"><canvas id="contribChart" role="img" aria-label="Annual pension contributions by year"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Annual ISA contribution</span>
+      </div>
+      <div class="chart-wrap"><canvas id="isaChart" role="img" aria-label="Annual ISA contributions by year"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MILESTONE CARDS -->
+  <div>
+    <p class="section-label">Retirement milestone projections</p>
+    <div class="milestone-cards">
+      <div class="milestone-card age57" id="card57"></div>
+      <div class="milestone-card age67" id="card67"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <h2>Year-by-year breakdown</h2>
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Scroll right for all columns</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Age</th>
+            <th>Gross salary</th>
+            <th>Your pension</th>
+            <th>Employer</th>
+            <th>Total pension/yr</th>
+            <th>Adjusted net</th>
+            <th>Tax saving</th>
+            <th>ISA/yr</th>
+            <th>Pension pot</th>
+            <th>ISA pot</th>
+            <th>Combined</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  All projections assume consistent growth rates and current UK tax rules (2024/25). Pension annual allowance monitored against HMRC £60,000 limit.<br>
+  State pension assumes 35 qualifying NI years. Tax calculations are estimates — consult a regulated IFA for personalised advice.<br>
+  This planner is for illustrative purposes only and does not constitute financial advice.
+</footer>
+
+<script>
+let mainChartInst = null;
+let contribChartInst = null;
+let isaChartInst = null;
+
+function fmt(n, decimals) {
+  const r = Math.round(Math.abs(n));
+  if (r >= 1000000) return '£' + (Math.abs(n)/1000000).toFixed(decimals !== undefined ? decimals : 2) + 'M';
+  if (r >= 1000) return '£' + (Math.abs(n)/1000).toFixed(0) + 'k';
+  return '£' + Math.round(Math.abs(n)).toLocaleString('en-GB');
+}
+
+function fmtFull(n) {
+  return '£' + Math.round(n).toLocaleString('en-GB');
+}
+
+function fmtPct(n) {
+  return n.toFixed(1) + '%';
+}
+
+function getVal(id) {
+  return parseFloat(document.getElementById(id).value) || 0;
+}
+
+function compute() {
+  const startAge    = getVal('age');
+  const retireAge   = getVal('retireAge');
+  const fullAge     = getVal('fullAge');
+  const baseSalary  = getVal('salary');
+  const salGrowth   = getVal('salaryGrowth') / 100;
+  const empPct      = getVal('employerPct') / 100;
+  const existPension= getVal('existingPension');
+  const minPension  = getVal('minPension');
+  const pensionCap  = getVal('pensionCap');
+  const targetNet   = getVal('targetNet');
+  const isaMonthly  = getVal('isaMonthly');
+  const isaLimit    = getVal('isaLimit');
+  const growth      = getVal('growthRate') / 100;
+  const statePension= getVal('statePension');
+  const endAge      = Math.max(retireAge, fullAge, 67);
+
+  const rows = [];
+  let pensionPot = existPension;
+  let isaPot = 0;
+  let salary = baseSalary;
+  let isaMonthlyNow = isaMonthly;
+  let capHitAge = null;
+
+  for (let age = startAge; age <= endAge; age++) {
+    const employer = salary * empPct;
+    const targetSacrifice = Math.max(0, salary - targetNet);
+    const neededSacrifice = Math.max(targetSacrifice, minPension);
+    const maxEmployee = pensionCap - employer;
+    const employeePension = Math.min(neededSacrifice, maxEmployee);
+    const totalPension = Math.min(employeePension + employer, pensionCap);
+    const capHit = (employeePension + employer) >= pensionCap;
+    if (capHit && !capHitAge) capHitAge = age;
+
+    const adjustedNet = salary - employeePension;
+    const isaContrib = Math.min(isaMonthlyNow * 12, isaLimit);
+
+    // Tax saving: at £100k, saving 60% on taper + 40% above
+    const basicTaxSaving = employeePension * 0.40;
+    const taperBonus = adjustedNet < 100000 && salary > 100000 ? Math.min(salary - 100000, employeePension) * 0.20 : 0;
+    const totalTaxSaving = basicTaxSaving + taperBonus;
+
+    pensionPot = pensionPot * (1 + growth) + totalPension;
+    isaPot = isaPot * (1 + growth) + isaContrib;
+
+    rows.push({
+      age,
+      salary: Math.round(salary),
+      employeePension: Math.round(employeePension),
+      employer: Math.round(employer),
+      totalPension: Math.round(totalPension),
+      adjustedNet: Math.round(adjustedNet),
+      taxSaving: Math.round(totalTaxSaving),
+      isaContrib: Math.round(isaContrib),
+      pensionPot: Math.round(pensionPot),
+      isaPot: Math.round(isaPot),
+      combined: Math.round(pensionPot + isaPot),
+      capHit
+    });
+
+    salary *= (1 + salGrowth);
+    isaMonthlyNow *= (1 + salGrowth);
+  }
+
+  return { rows, capHitAge, retireAge, fullAge, statePension, growth };
+}
+
+function render() {
+  const { rows, capHitAge, retireAge, fullAge, statePension, growth } = compute();
+
+  // Update timestamp
+  document.getElementById('lastUpdated').textContent =
+    'Last reviewed: ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  // Warning bar
+  const wb = document.getElementById('warningBar');
+  if (capHitAge) {
+    wb.style.display = 'block';
+    wb.textContent = `⚠ Pension annual allowance cap (£${Math.round(getVal('pensionCap')/1000)}k) reached at age ${capHitAge}. Redirect excess salary into wife's ISA (£20k/yr) or SIPP (£3,600/yr with HMRC top-up) from that age.`;
+  } else {
+    wb.style.display = 'none';
+  }
+
+  const first = rows[0];
+  const r57 = rows.find(r => r.age === retireAge) || rows[rows.length - 1];
+  const r67 = rows.find(r => r.age === fullAge) || rows[rows.length - 1];
+  const last = rows[rows.length - 1];
+
+  // KPI cards
+  const totalContributed = rows.reduce((s, r) => s + r.employeePension + r.isaContrib, 0);
+  const totalEmployer = rows.reduce((s, r) => s + r.employer, 0);
+  const totalTaxSaved = rows.reduce((s, r) => s + r.taxSaving, 0);
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card gold">
+      <div class="kpi-label">Current annual pension input</div>
+      <div class="kpi-value">${fmtFull(first.totalPension)}</div>
+      <div class="kpi-sub">You £${Math.round(first.employeePension/1000)}k + employer £${Math.round(first.employer/1000)}k</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Pension pot at ${retireAge}</div>
+      <div class="kpi-value">${fmt(r57.pensionPot)}</div>
+      <div class="kpi-sub">ISA ${fmt(r57.isaPot)} · combined ${fmt(r57.combined)}</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Pension pot at ${fullAge}</div>
+      <div class="kpi-value">${fmt(r67.pensionPot)}</div>
+      <div class="kpi-sub">ISA ${fmt(r67.isaPot)} · combined ${fmt(r67.combined)}</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Total employer free money</div>
+      <div class="kpi-value">${fmt(totalEmployer)}</div>
+      <div class="kpi-sub">Over ${rows.length} years</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Total estimated tax relief</div>
+      <div class="kpi-value">${fmt(totalTaxSaved)}</div>
+      <div class="kpi-sub">Salary sacrifice benefit</div>
+    </div>
+  `;
+
+  // Tax banner
+  const yr1TaxSaving = first.taxSaving;
+  const effectiveRate = first.salary > first.targetNet ? 60 : 40;
+  document.getElementById('taxBanner').innerHTML = `
+    <div class="tax-item">
+      <div class="t-label">Year 1 tax saved (salary sacrifice)</div>
+      <div class="t-val">${fmtFull(yr1TaxSaving)}</div>
+      <div class="t-sub">Effective relief rate: ~${effectiveRate}%</div>
+    </div>
+    <div class="tax-item">
+      <div class="t-label">Real cost of your pension contribution</div>
+      <div class="t-val">${fmtFull(first.employeePension - yr1TaxSaving)}</div>
+      <div class="t-sub">After tax saving vs gross £${Math.round(first.employeePension/1000)}k</div>
+    </div>
+    <div class="tax-item">
+      <div class="t-label">Adjusted net income (year 1)</div>
+      <div class="t-val" style="color:${first.adjustedNet < 100000 ? 'var(--green)' : 'var(--red)'}">${fmtFull(first.adjustedNet)}</div>
+      <div class="t-sub">${first.adjustedNet < 100000 ? 'Personal allowance preserved' : 'Above £100k — review contribution'}</div>
+    </div>
+    <div class="tax-item">
+      <div class="t-label">NI saving (salary sacrifice est.)</div>
+      <div class="t-val">${fmtFull(Math.round(first.employeePension * 0.02))}</div>
+      <div class="t-sub">2% NI relief on sacrifice amount</div>
+    </div>
+    <div class="tax-item">
+      <div class="t-label">Wife's SIPP opportunity</div>
+      <div class="t-val">£3,600/yr</div>
+      <div class="t-sub">£2,880 in → HMRC tops to £3,600 (25% free)</div>
+    </div>
+  `;
+
+  // Milestone cards
+  const lumpSum57 = Math.round(r57.pensionPot * 0.25);
+  const drawdown57 = Math.round((r57.pensionPot - lumpSum57) * 0.04);
+  const isaDrawdown57 = Math.round(r57.isaPot * 0.04);
+
+  const lumpSum67 = Math.round(r67.pensionPot * 0.25);
+  const drawdown67 = Math.round((r67.pensionPot - lumpSum67) * 0.04);
+  const isaDrawdown67 = Math.round(r67.isaPot * 0.04);
+
+  document.getElementById('card57').innerHTML = `
+    <h2>Age ${retireAge}</h2>
+    <div class="subtitle">Early retirement milestone · Pension access from age 57 (2028 rules)</div>
+    <div class="m-row"><span>Pension pot</span><span style="color:var(--purple2)">${fmtFull(r57.pensionPot)}</span></div>
+    <div class="m-row"><span>ISA pot (fully tax-free)</span><span style="color:var(--purple2)">${fmtFull(r57.isaPot)}</span></div>
+    <div class="m-row"><span>25% tax-free lump sum</span><span style="color:var(--green2)">${fmtFull(lumpSum57)}</span></div>
+    <div class="m-row"><span>Drawdown at 4% rule/yr</span><span style="color:var(--purple2)">${fmtFull(drawdown57)}</span></div>
+    <div class="m-row"><span>ISA income (tax-free)/yr</span><span style="color:var(--green2)">${fmtFull(isaDrawdown57)}</span></div>
+    <div class="m-row"><span>Combined passive income/yr</span><span style="color:var(--gold2)">${fmtFull(drawdown57 + isaDrawdown57)}</span></div>
+    <div class="m-row"><span>State pension</span><span style="color:var(--text3)">Not yet (age ${fullAge})</span></div>
+    <div class="m-row"><span>Gross salary at ${retireAge}</span><span>${fmtFull(r57.salary)}</span></div>
+  `;
+
+  document.getElementById('card67').innerHTML = `
+    <h2>Age ${fullAge}</h2>
+    <div class="subtitle">Full retirement · State pension eligible · Maximum income</div>
+    <div class="m-row"><span>Pension pot</span><span style="color:var(--teal)">${fmtFull(r67.pensionPot)}</span></div>
+    <div class="m-row"><span>ISA pot (fully tax-free)</span><span style="color:var(--teal)">${fmtFull(r67.isaPot)}</span></div>
+    <div class="m-row"><span>25% tax-free lump sum</span><span style="color:var(--green2)">${fmtFull(lumpSum67)}</span></div>
+    <div class="m-row"><span>Drawdown at 4% rule/yr</span><span style="color:var(--teal)">${fmtFull(drawdown67)}</span></div>
+    <div class="m-row"><span>ISA income (tax-free)/yr</span><span style="color:var(--green2)">${fmtFull(isaDrawdown67)}</span></div>
+    <div class="m-row"><span>State pension/yr</span><span style="color:var(--green2)">${fmtFull(statePension)}</span></div>
+    <div class="m-row"><span>Total gross annual income</span><span style="color:var(--gold2)">${fmtFull(drawdown67 + isaDrawdown67 + statePension)}</span></div>
+    <div class="m-row"><span>Est. tax on pension drawdown</span><span style="color:var(--red)">~${fmtFull(Math.round(drawdown67 * 0.22))}</span></div>
+    <div class="m-row"><span>Estimated net income/yr</span><span style="color:var(--gold2)">${fmtFull(Math.round(drawdown67 * 0.78 + isaDrawdown67 + statePension))}</span></div>
+  `;
+
+  // Table
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.age === retireAge) tr.className = 'milestone';
+    if (r.age === fullAge) tr.className = 'milestone-end';
+    const ageTag = r.age === retireAge ? `<span class="tag tag-57">retire?</span>` :
+                   r.age === fullAge ? `<span class="tag tag-67">full</span>` : '';
+    const capTag = r.capHit ? `<span class="tag tag-cap">cap</span>` : '';
+    const netClass = r.adjustedNet < 100000 ? 'safe' : 'danger';
+    tr.innerHTML = `
+      <td>${r.age}${ageTag}</td>
+      <td>${fmtFull(r.salary)}</td>
+      <td>${fmtFull(r.employeePension)}${capTag}</td>
+      <td>${fmtFull(r.employer)}</td>
+      <td>${fmtFull(r.totalPension)}</td>
+      <td class="${netClass}">${fmtFull(r.adjustedNet)}</td>
+      <td class="safe">+${fmtFull(r.taxSaving)}</td>
+      <td>${fmtFull(r.isaContrib)}</td>
+      <td class="highlight">${fmt(r.pensionPot)}</td>
+      <td style="color:var(--teal2)">${fmt(r.isaPot)}</td>
+      <td style="color:var(--gold2);font-weight:500">${fmt(r.combined)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Charts
+  const ages = rows.map(r => r.age);
+  const pVals = rows.map(r => r.pensionPot);
+  const iVals = rows.map(r => r.isaPot);
+  const cVals = rows.map(r => r.combined);
+  const contribs = rows.map(r => r.totalPension);
+  const isaContribs = rows.map(r => r.isaContrib);
+
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        ticks: { color: '#5a5960', font: { size: 11 } },
+        grid: { color: 'rgba(255,255,255,0.04)' }
+      },
+      y: {
+        ticks: { color: '#5a5960', font: { size: 11 } },
+        grid: { color: 'rgba(255,255,255,0.04)' }
+      }
+    }
+  };
+
+  if (mainChartInst) mainChartInst.destroy();
+  mainChartInst = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: {
+      labels: ages,
+      datasets: [
+        {
+          label: 'Pension pot',
+          data: pVals,
+          borderColor: '#9b87f5',
+          backgroundColor: 'rgba(155,135,245,0.08)',
+          fill: false, borderWidth: 2.5,
+          pointRadius: ages.map(a => (a === retireAge || a === fullAge) ? 6 : 0),
+          pointBackgroundColor: '#9b87f5',
+          tension: 0.35
+        },
+        {
+          label: 'ISA pot',
+          data: iVals,
+          borderColor: '#4ecdc4',
+          borderDash: [5, 3],
+          backgroundColor: 'rgba(78,205,196,0.05)',
+          fill: false, borderWidth: 2,
+          pointRadius: ages.map(a => (a === retireAge || a === fullAge) ? 6 : 0),
+          pointBackgroundColor: '#4ecdc4',
+          tension: 0.35
+        },
+        {
+          label: 'Combined',
+          data: cVals,
+          borderColor: '#c8a96e',
+          backgroundColor: 'rgba(200,169,110,0.06)',
+          fill: true, borderWidth: 1.5,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          tension: 0.35
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' £' + Math.round(ctx.parsed.y).toLocaleString('en-GB') } }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#5a5960', font: { size: 11 },
+            autoSkip: false, maxRotation: 0,
+            callback: (v, i) => { const a = ages[i]; return (a % 5 === 0 || a === retireAge || a === fullAge) ? a : ''; }
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          ticks: {
+            color: '#5a5960', font: { size: 11 },
+            callback: v => v >= 1000000 ? '£' + (v/1000000).toFixed(1) + 'M' : '£' + (v/1000).toFixed(0) + 'k'
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+
+  if (contribChartInst) contribChartInst.destroy();
+  contribChartInst = new Chart(document.getElementById('contribChart'), {
+    type: 'bar',
+    data: {
+      labels: ages,
+      datasets: [{
+        label: 'Total pension/yr',
+        data: contribs,
+        backgroundColor: ages.map(a => a === retireAge ? '#9b87f5' : a === fullAge ? '#4ecdc4' : 'rgba(155,135,245,0.5)'),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' £' + Math.round(ctx.parsed.y).toLocaleString('en-GB') } }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#5a5960', font: { size: 10 }, autoSkip: false, maxRotation: 0,
+            callback: (v, i) => { const a = ages[i]; return (a % 5 === 0 || a === retireAge) ? a : ''; }
+          },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        },
+        y: {
+          ticks: {
+            color: '#5a5960', font: { size: 10 },
+            callback: v => '£' + (v/1000).toFixed(0) + 'k'
+          },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        }
+      }
+    }
+  });
+
+  if (isaChartInst) isaChartInst.destroy();
+  isaChartInst = new Chart(document.getElementById('isaChart'), {
+    type: 'bar',
+    data: {
+      labels: ages,
+      datasets: [{
+        label: 'ISA contribution/yr',
+        data: isaContribs,
+        backgroundColor: ages.map(a => a === retireAge ? '#4ecdc4' : a === fullAge ? '#c8a96e' : 'rgba(78,205,196,0.45)'),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' £' + Math.round(ctx.parsed.y).toLocaleString('en-GB') } }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#5a5960', font: { size: 10 }, autoSkip: false, maxRotation: 0,
+            callback: (v, i) => { const a = ages[i]; return (a % 5 === 0 || a === retireAge) ? a : ''; }
+          },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        },
+        y: {
+          ticks: {
+            color: '#5a5960', font: { size: 10 },
+            callback: v => '£' + (v/1000).toFixed(0) + 'k'
+          },
+          grid: { color: 'rgba(255,255,255,0.03)' }
+        }
+      }
+    }
+  });
+}
+
+// Debounced render on input
+let debTimer;
+document.querySelectorAll('input').forEach(inp => {
+  inp.addEventListener('input', () => {
+    clearTimeout(debTimer);
+    debTimer = setTimeout(render, 300);
+  });
+});
+
+render();
+</script>
+</body>
+</html>
